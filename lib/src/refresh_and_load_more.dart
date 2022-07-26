@@ -34,6 +34,7 @@ class RefreshAndLoadingEvent {
   final LoadMoreIndicatorStatus? loadMoreIndicatorStatus;
 
 
+
 }
 
 ///指示器类型
