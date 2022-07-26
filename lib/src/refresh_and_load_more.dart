@@ -1,5 +1,5 @@
-
 part of refresh_and_loading;
+
 class IndicatorStatusData {
   const IndicatorStatusData(this.pullIndicatorMode, {this.offset});
 
@@ -26,21 +26,33 @@ enum RefreshIndicatorStatus {
   error, // 错误
 }
 
+class RefreshAndLoadingEvent {
+  const RefreshAndLoadingEvent(
+      {this.loadMoreIndicatorStatus, this.refreshIndicatorStatus});
+
+  final RefreshIndicatorStatus? refreshIndicatorStatus;
+  final LoadMoreIndicatorStatus? loadMoreIndicatorStatus;
+}
+
 ///指示器类型
 enum IndicatorType { refresh, loadMore }
 
 class RefreshAndLoadMore extends StatefulWidget {
-  const RefreshAndLoadMore(
-      {Key? key,
-        this.reverse = false,
-        this.maxDragOffset = 80.0,
-        this.onRefresh,
-        this.onLoadingMore})
-      : super(key: key);
+  const RefreshAndLoadMore({
+    Key? key,
+    this.reverse = false,
+    this.maxDragOffset = 80.0,
+    this.onRefresh,
+    this.onLoadingMore,
+    required this.child,
+    required this.refreshAndLoadMoreStream,
+  }) : super(key: key);
   final bool reverse;
   final double maxDragOffset;
-  final void Function()? onRefresh;
+  final Future Function()? onRefresh;
   final void Function()? onLoadingMore;
+  final Widget child;
+  final Stream<RefreshAndLoadingEvent> refreshAndLoadMoreStream;
 
   @override
   State<RefreshAndLoadMore> createState() => _RefreshAndLoadMoreState();
@@ -68,7 +80,7 @@ class _RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   double get _loadMoreDragOffset => _loadMoreDragOffsetValue;
 
   set _loadMoreDragOffset(double value) {
-    value = math.max(0.0, math.min(value, widget.maxDragOffset*3));
+    value = math.max(0.0, math.min(value, widget.maxDragOffset * 3));
     _loadMoreDragOffsetValue = value;
     _notificationLoadMoreIndicator();
   }
@@ -76,8 +88,21 @@ class _RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   @override
   void initState() {
     super.initState();
-    _refreshStream = StreamController<IndicatorStatusData>.broadcast();
-    _loadMoreStream = StreamController<IndicatorStatusData>.broadcast();
+    if (widget.onRefresh != null) {
+      _refreshStream = StreamController<IndicatorStatusData>.broadcast();
+    }
+    if (widget.onLoadingMore != null) {
+      _loadMoreStream = StreamController<IndicatorStatusData>.broadcast();
+    }
+    widget.refreshAndLoadMoreStream.listen((event) {
+      if (event.refreshIndicatorStatus != null) {
+        _refreshStatus = event.refreshIndicatorStatus!;
+        _refreshDragOffset = 0;
+      } else if (event.loadMoreIndicatorStatus != null) {
+        _loadMoreStatus = event.loadMoreIndicatorStatus!;
+        _loadMoreDragOffset = 0;
+      }
+    });
   }
 
   _buildRefresh() {
@@ -88,11 +113,11 @@ class _RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
             double offset = snapshot.data?.offset ?? 0;
             double progress = offset / widget.maxDragOffset;
             progress = progress > 1 ? 1 : progress;
-            progress = progress == 0 ? 1 : progress;
+            // progress = progress == 0 ? 1 : progress;
             return Container(
               height: offset,
               alignment: Alignment.topCenter,
-              padding: const EdgeInsets.only(top: 30),
+              padding: EdgeInsets.only(top: widget.maxDragOffset / 2 - 15),
               child: (_refreshStatus == RefreshIndicatorStatus.arrived ||
                   _refreshStatus == RefreshIndicatorStatus.refresh)
                   ? const CupertinoActivityIndicator(radius: 15)
@@ -134,110 +159,99 @@ class _RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
 
   @override
   Widget build(BuildContext context) {
-    return  NotificationListener(
-          onNotification: _notifiListener,
-          child: Column(children: [
-            if (widget.reverse) _buildLoadMore() else _buildRefresh(),
-            ...List<int>.generate(100, (int index) => index)
-                .map((index) => SliverToBoxAdapter(
-              child: Container(
-                height: 50,
-                color: Colors.white,
-                width: double.infinity,
-                alignment: Alignment.center,
-                child: Text("$index"),
-              ),
-            ))
-                .toList(),
-            if (widget.reverse) _buildRefresh() else _buildLoadMore(),
-          ]),
-        );
+    return NotificationListener(
+      onNotification: _notifiListener,
+      child: CustomScrollView(slivers: [
+        if (widget.reverse && widget.onLoadingMore != null) _buildLoadMore(),
+        if (!widget.reverse && widget.onRefresh != null) _buildRefresh(),
+        SliverToBoxAdapter(
+          child: widget.child,
+        ),
+        if (widget.reverse && widget.onRefresh != null) _buildRefresh(),
+        if (!widget.reverse && widget.onLoadingMore != null) _buildLoadMore(),
+      ]),
+    );
+  }
+
+  _checkLoadMore(double overscroll) {
+    double step =
+        overscroll / ((_loadMoreDragOffset > widget.maxDragOffset) ? 3 : 1);
+    _loadMoreDragOffset = _loadMoreDragOffset + (widget.reverse ? -step : step);
+    if (_loadMoreDragOffset > widget.maxDragOffset &&
+        _loadMoreStatus != LoadMoreIndicatorStatus.loading) {
+      _loadMoreStatus = LoadMoreIndicatorStatus.arrived;
+    }
+  }
+
+  _checkRefresh(double overscroll) {
+    double step =
+        overscroll / ((_refreshDragOffset > widget.maxDragOffset) ? 3 : 1);
+    _refreshDragOffset = _refreshDragOffset + (widget.reverse ? step : -step);
+    if (_refreshDragOffset > widget.maxDragOffset &&
+        _refreshStatus != RefreshIndicatorStatus.refresh) {
+      _refreshStatus = RefreshIndicatorStatus.arrived;
+    }
   }
 
   bool _notifiListener(ScrollNotification notification) {
     switch (notification.runtimeType) {
       case ScrollStartNotification:
-      //   if (widget.reverse
-      //       ? notification.metrics.extentAfter == 0.0
-      //       : notification.metrics.extentBefore == 0.0) {
-      //     _refreshStatus = IndicatorStatus.drag;
-      //   }
-      //   break;
-      // case ScrollUpdateNotification:
-      //   notification as ScrollUpdateNotification;
-      //   if (_refreshStatus == IndicatorStatus.drag) {
-      //     if (widget.reverse) {
-      //       _refreshDragOffset =
-      //           (_refreshDragOffset ?? 0) + notification.scrollDelta!;
-      //     } else {
-      //       _refreshDragOffset =
-      //           (_refreshDragOffset ?? 0) - notification.scrollDelta!;
-      //     }
-      //     if (_refreshDragOffset?.floor() == widget.maxDragOffset) {
-      //       _refreshStatus = IndicatorStatus.arrived;
-      //     }
-      //   }
         break;
       case OverscrollNotification:
         notification as OverscrollNotification;
         if (notification.metrics.extentAfter > 0.0) {
           if (widget.reverse && widget.onLoadingMore != null) {
-            _loadMoreDragOffset = _loadMoreDragOffset + notification.overscroll;
-            if (_loadMoreDragOffset > widget.maxDragOffset) {
-              _loadMoreStatus = LoadMoreIndicatorStatus.arrived;
-            }
+            _checkLoadMore(notification.overscroll);
           } else if (widget.onRefresh != null) {
-            _refreshDragOffset = (_refreshDragOffset) -
-                notification.overscroll /
-                    ((_refreshDragOffset > widget.maxDragOffset) ? 3 : 1);
-            if (_refreshDragOffset > widget.maxDragOffset) {
-              _refreshStatus = RefreshIndicatorStatus.arrived;
-            }
+            _checkRefresh(notification.overscroll);
           }
         } else if (notification.metrics.extentBefore > 0.0) {
           if (widget.reverse && widget.onRefresh != null) {
-            _refreshDragOffset = (_refreshDragOffset) +
-                notification.overscroll /
-                    ((_refreshDragOffset > widget.maxDragOffset) ? 3 : 1);
-            if (_refreshDragOffset > widget.maxDragOffset) {
-              _refreshStatus = RefreshIndicatorStatus.arrived;
-            }
+            _checkRefresh(notification.overscroll);
           } else if (widget.onLoadingMore != null) {
-            _loadMoreDragOffset = _loadMoreDragOffset + notification.overscroll;
-            if (_loadMoreDragOffset > widget.maxDragOffset) {
-              _loadMoreStatus = LoadMoreIndicatorStatus.arrived;
-            }
+            _checkLoadMore(notification.overscroll);
           }
         }
         break;
       case ScrollEndNotification:
-        print("ScrollEndNotification");
-
-        if (_refreshStatus == RefreshIndicatorStatus.arrived || _loadMoreStatus == LoadMoreIndicatorStatus.loading) {
+        if (_refreshDragOffset > widget.maxDragOffset &&
+            _refreshStatus == RefreshIndicatorStatus.arrived) {
           _refreshDragOffset = widget.maxDragOffset;
           _notificationRefreshIndicator();
           _doRefresh();
-        } else {
+        } else if (_refreshStatus != RefreshIndicatorStatus.refresh) {
           _putAwayRefresh();
+        } else if (_refreshStatus == RefreshIndicatorStatus.refresh) {
+          _refreshDragOffset = widget.maxDragOffset;
         }
-        if (_loadMoreStatus == LoadMoreIndicatorStatus.arrived || _loadMoreStatus == LoadMoreIndicatorStatus.loading) {
+        if (_loadMoreDragOffset > widget.maxDragOffset &&
+            _loadMoreStatus == LoadMoreIndicatorStatus.arrived) {
           _loadMoreDragOffset = widget.maxDragOffset;
           _notificationRefreshIndicator();
           _doLoadMore();
-        } else {
+        } else if (_loadMoreStatus != LoadMoreIndicatorStatus.loading) {
           _putAwayLoadMore();
+        } else if (_loadMoreStatus == LoadMoreIndicatorStatus.loading) {
+          _loadMoreDragOffset = widget.maxDragOffset;
         }
         break;
     }
+
     return false;
   }
 
-  _doRefresh() {
+  Future _doRefresh() async{
     _refreshStatus = RefreshIndicatorStatus.refresh;
+    if (kDebugMode) {
+      print("refresh");
+    }
     widget.onRefresh?.call();
   }
 
-  _doLoadMore() {
+  _doLoadMore() async{
+    if (kDebugMode) {
+      print("_doLoadMore");
+    }
     _loadMoreStatus = LoadMoreIndicatorStatus.loading;
     widget.onLoadingMore?.call();
   }
