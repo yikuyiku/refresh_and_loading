@@ -146,6 +146,7 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
     }
   }
 
+
   bool _notifiListener(ScrollNotification notification) {
     switch (notification.runtimeType) {
       case ScrollStartNotification:
