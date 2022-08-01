@@ -37,8 +37,7 @@ class _ARefreshIndicatorrState extends State<ARefreshIndicator> {
                 height: offset,
                 alignment: Alignment.topCenter,
                 padding: EdgeInsets.only(top: _maxRefreshDragOffset / 2 - 15),
-                child: (indicatorStatus == RefreshIndicatorStatus.arrived ||
-                        indicatorStatus == RefreshIndicatorStatus.refresh)
+                child: indicatorStatus == RefreshIndicatorStatus.refresh
                     ? const CupertinoActivityIndicator(radius: 15)
                     : CupertinoActivityIndicator.partiallyRevealed(
                         progress: progress,

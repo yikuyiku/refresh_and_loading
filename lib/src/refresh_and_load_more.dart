@@ -172,9 +172,6 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
         break;
       case OverscrollNotification:
         notification as OverscrollNotification;
-        if (kDebugMode) {
-          print("OverscrollNotification");
-        }
         if (notification.metrics.extentAfter > 0.0) {
           if (widget.reverse && widget.onLoadingMore != null) {
             _checkLoadMore(notification.overscroll);
@@ -218,6 +215,7 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
 
   Future _doRefresh() async {
     _refreshStatus = RefreshIndicatorStatus.refresh;
+    _notificationRefreshIndicator();
     if (kDebugMode) {
       print("refresh");
     }
