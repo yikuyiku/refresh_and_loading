@@ -25,6 +25,7 @@ class _HomePageState extends State<HomePage> {
   _onRefresh() async {
     // monitor network fetch
     await Future.delayed(Duration(milliseconds: 1000));
+    _refreshLoadingController.refreshCompleted();
   }
 
   void _onLoading() async {
