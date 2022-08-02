@@ -45,30 +45,30 @@ class RefreshAndLoadingEvent {
 enum IndicatorType { refresh, loadMore }
 
 class RefreshAndLoadMore extends StatefulWidget {
-  const RefreshAndLoadMore(
-      {Key? key,
-      this.reverse = false,
-      this.maxRefreshDragOffset = 80.0,
-      this.maxLoadingDragOffset = 60.0,
-      this.onRefresh,
-      this.onLoadingMore,
-      this.primary = false,
-      this.cacheExtent,
-      this.scrollDirection,
-      this.semanticChildCount,
-      this.scrollController,
-      this.dragStartBehavior,
-      this.physics,
-      required this.child,
-      required this.refreshLoadingController})
-      : super(key: key);
+  const RefreshAndLoadMore({
+    Key? key,
+    this.reverse = false,
+    this.maxRefreshDragOffset = 80.0,
+    this.maxLoadingDragOffset = 60.0,
+    this.onRefresh,
+    this.onLoadingMore,
+    this.primary = false,
+    this.cacheExtent,
+    this.scrollDirection,
+    this.semanticChildCount,
+    this.scrollController,
+    this.dragStartBehavior,
+    this.physics,
+    this.refreshLoadingController,
+    required this.child,
+  }) : super(key: key);
   final bool reverse;
   final double maxRefreshDragOffset;
   final double maxLoadingDragOffset;
   final Future Function()? onRefresh;
   final void Function()? onLoadingMore;
   final Widget child;
-  final RefreshLoadingController refreshLoadingController;
+  final RefreshLoadingController? refreshLoadingController;
 
   final bool? primary;
   final double? cacheExtent;
@@ -129,26 +129,26 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
       _loadMoreStream =
           StreamController<LoadingIndicatorStatusData>.broadcast();
     }
-    widget.refreshLoadingController.headerMode?.addListener(() {
+    widget.refreshLoadingController?.headerMode?.addListener(() {
       RefreshIndicatorStatus? refreshIndicatorStatus =
-          widget.refreshLoadingController.headerMode!.value;
+          widget.refreshLoadingController?.headerMode!.value;
       switch (refreshIndicatorStatus) {
         case RefreshIndicatorStatus.done:
-          _refreshStatus = refreshIndicatorStatus;
+          _refreshStatus = refreshIndicatorStatus!;
           _refreshDragOffset = 0;
-          widget.refreshLoadingController.headerMode?.value =
+          widget.refreshLoadingController?.headerMode?.value =
               RefreshIndicatorStatus.snap;
           break;
       }
     });
-    widget.refreshLoadingController.footerMode?.addListener(() {
+    widget.refreshLoadingController?.footerMode?.addListener(() {
       LoadMoreIndicatorStatus? loadMoreIndicatorStatus =
-          widget.refreshLoadingController.footerMode!.value;
+          widget.refreshLoadingController?.footerMode!.value;
       switch (loadMoreIndicatorStatus) {
         case LoadMoreIndicatorStatus.done:
-          _loadMoreStatus = loadMoreIndicatorStatus;
+          _loadMoreStatus = loadMoreIndicatorStatus!;
           _loadMoreDragOffset = 0;
-          widget.refreshLoadingController.footerMode?.value =
+          widget.refreshLoadingController?.footerMode?.value =
               LoadMoreIndicatorStatus.snap;
           break;
       }
@@ -216,7 +216,7 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
       Clip? clipBehavior;
 
       if (childView is ScrollView) {
-        primary = primary ?? childView.primary;
+        primary = primary;
         cacheExtent = cacheExtent ?? childView.cacheExtent;
         key = key ?? childView.key;
         semanticChildCount = semanticChildCount ?? childView.semanticChildCount;
@@ -294,7 +294,7 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
     double step = overscroll /
         ((_loadMoreDragOffset > widget.maxLoadingDragOffset) ? 3 : 1);
     _loadMoreDragOffset = _loadMoreDragOffset + (widget.reverse ? -step : step);
-    if (_loadMoreDragOffset > widget.maxLoadingDragOffset/2 &&
+    if (_loadMoreDragOffset > widget.maxLoadingDragOffset / 2 &&
         _loadMoreStatus != LoadMoreIndicatorStatus.loading) {
       // print("load more arrived");
       _loadMoreStatus = LoadMoreIndicatorStatus.arrived;
