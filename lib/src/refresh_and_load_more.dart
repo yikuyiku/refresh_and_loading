@@ -6,6 +6,7 @@ class RefreshIndicatorStatusData {
   final RefreshIndicatorStatus indicatorStatus;
   final double? offset;
 }
+
 class LoadingIndicatorStatusData {
   const LoadingIndicatorStatusData(this.indicatorStatus, {this.offset});
 
@@ -44,32 +45,49 @@ class RefreshAndLoadingEvent {
 enum IndicatorType { refresh, loadMore }
 
 class RefreshAndLoadMore extends StatefulWidget {
-  const RefreshAndLoadMore({
-    Key? key,
-    this.reverse = false,
-    this.maxRefreshDragOffset = 80.0,
-    this.maxLoadingDragOffset = 50.0,
-    this.onRefresh,
-    this.onLoadingMore,
-    required this.child,
-    required this.refreshAndLoadMoreStream,
-  }) : super(key: key);
+  const RefreshAndLoadMore(
+      {Key? key,
+      this.reverse = false,
+      this.maxRefreshDragOffset = 80.0,
+      this.maxLoadingDragOffset = 60.0,
+      this.onRefresh,
+      this.onLoadingMore,
+      this.primary = false,
+      this.cacheExtent,
+      this.scrollDirection,
+      this.semanticChildCount,
+      this.scrollController,
+      this.dragStartBehavior,
+      this.physics,
+      required this.child,
+      required this.refreshLoadingController})
+      : super(key: key);
   final bool reverse;
   final double maxRefreshDragOffset;
   final double maxLoadingDragOffset;
   final Future Function()? onRefresh;
   final void Function()? onLoadingMore;
   final Widget child;
-  final Stream<RefreshAndLoadingEvent> refreshAndLoadMoreStream;
+  final RefreshLoadingController refreshLoadingController;
+
+  final bool? primary;
+  final double? cacheExtent;
+
+  final Axis? scrollDirection;
+  final int? semanticChildCount;
+  final ScrollController? scrollController;
+  final DragStartBehavior? dragStartBehavior;
+  final ScrollPhysics? physics;
 
   @override
   State<RefreshAndLoadMore> createState() => RefreshAndLoadMoreState();
 }
 
 class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
-  get refreshStream => _refreshStream.stream;
+  Stream<RefreshIndicatorStatusData> get refreshStream => _refreshStream.stream;
 
-  get loadMoreStream => _loadMoreStream.stream;
+  Stream<LoadingIndicatorStatusData> get loadMoreStream =>
+      _loadMoreStream.stream;
   late final StreamController<RefreshIndicatorStatusData> _refreshStream;
   late final StreamController<LoadingIndicatorStatusData> _loadMoreStream;
 
@@ -96,49 +114,196 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
     _notificationLoadMoreIndicator();
   }
 
+  ScrollController? refreshScrollController;
+
   @override
   void initState() {
     super.initState();
+    if (widget.scrollController == null) {
+      refreshScrollController = ScrollController();
+    }
     if (widget.onRefresh != null) {
       _refreshStream = StreamController<RefreshIndicatorStatusData>.broadcast();
     }
     if (widget.onLoadingMore != null) {
-      _loadMoreStream = StreamController<LoadingIndicatorStatusData>.broadcast();
+      _loadMoreStream =
+          StreamController<LoadingIndicatorStatusData>.broadcast();
     }
-    widget.refreshAndLoadMoreStream.listen((event) {
-      if (event.refreshIndicatorStatus != null) {
-        _refreshStatus = event.refreshIndicatorStatus!;
-        _refreshDragOffset = 0;
-      } else if (event.loadMoreIndicatorStatus != null) {
-        _loadMoreStatus = event.loadMoreIndicatorStatus!;
-        _loadMoreDragOffset = 0;
+    widget.refreshLoadingController.headerMode?.addListener(() {
+      RefreshIndicatorStatus? refreshIndicatorStatus =
+          widget.refreshLoadingController.headerMode!.value;
+      switch (refreshIndicatorStatus) {
+        case RefreshIndicatorStatus.done:
+          _refreshStatus = refreshIndicatorStatus;
+          _refreshDragOffset = 0;
+          widget.refreshLoadingController.headerMode?.value =
+              RefreshIndicatorStatus.snap;
+          break;
+      }
+    });
+    widget.refreshLoadingController.footerMode?.addListener(() {
+      LoadMoreIndicatorStatus? loadMoreIndicatorStatus =
+          widget.refreshLoadingController.footerMode!.value;
+      switch (loadMoreIndicatorStatus) {
+        case LoadMoreIndicatorStatus.done:
+          _loadMoreStatus = loadMoreIndicatorStatus;
+          _loadMoreDragOffset = 0;
+          widget.refreshLoadingController.footerMode?.value =
+              LoadMoreIndicatorStatus.snap;
+          break;
       }
     });
   }
 
+  List<Widget>? _buildSliversByChild(
+    BuildContext context,
+    Widget? child,
+  ) {
+    List<Widget>? slivers;
+    if (child is ScrollView) {
+      if (child is BoxScrollView) {
+        //avoid system inject padding when own indicator top or bottom
+        Widget sliver = child.buildChildLayout(context);
+        if (child.padding != null) {
+          slivers = [SliverPadding(sliver: sliver, padding: child.padding!)];
+        } else {
+          slivers = [sliver];
+        }
+      } else {
+        slivers = List.from(child.buildSlivers(context), growable: true);
+      }
+    } else if (child is! Scrollable) {
+      slivers = [
+        SliverRefreshBody(
+          child: child ?? Container(),
+        )
+      ];
+    }
+    if (widget.onRefresh != null) {
+      slivers?.insert(0, const SliverToBoxAdapter(child: ARefreshIndicator()));
+    }
+    if (widget.onLoadingMore != null) {
+      slivers?.add(const SliverToBoxAdapter(child: LoadingIndicator()));
+    }
 
+    return slivers;
+  }
+
+  Widget? _buildBodyBySlivers(
+    Widget? childView,
+    List<Widget>? slivers,
+  ) {
+    Widget? body;
+    if (childView is! Scrollable) {
+      bool? primary = widget.primary;
+      Key? key;
+      double? cacheExtent = widget.cacheExtent;
+
+      Axis? scrollDirection = widget.scrollDirection;
+      int? semanticChildCount = widget.semanticChildCount;
+      bool? reverse = widget.reverse;
+      ScrollController? scrollController =
+          widget.scrollController ?? refreshScrollController;
+      DragStartBehavior? dragStartBehavior = widget.dragStartBehavior;
+      ScrollPhysics? physics =
+          widget.physics ?? const AlwaysScrollableScrollPhysics();
+      // ScrollPhysics? physics =
+      //     widget.physics ?? const AlwaysScrollableScrollPhysics();
+      Key? center;
+      double? anchor;
+      ScrollViewKeyboardDismissBehavior? keyboardDismissBehavior;
+      String? restorationId;
+      Clip? clipBehavior;
+
+      if (childView is ScrollView) {
+        primary = primary ?? childView.primary;
+        cacheExtent = cacheExtent ?? childView.cacheExtent;
+        key = key ?? childView.key;
+        semanticChildCount = semanticChildCount ?? childView.semanticChildCount;
+        reverse = reverse;
+        dragStartBehavior = dragStartBehavior ?? childView.dragStartBehavior;
+        scrollDirection = scrollDirection ?? childView.scrollDirection;
+        physics = physics;
+        center = center ?? childView.center;
+        anchor = anchor ?? childView.anchor;
+        keyboardDismissBehavior =
+            keyboardDismissBehavior ?? childView.keyboardDismissBehavior;
+        restorationId = restorationId ?? childView.restorationId;
+        clipBehavior = clipBehavior ?? childView.clipBehavior;
+        scrollController = scrollController ?? childView.controller;
+      }
+      body = CustomScrollView(
+        // ignore: DEPRECATED_MEMBER_USE_FROM_SAME_PACKAGE
+        controller: scrollController,
+        cacheExtent: cacheExtent,
+        key: key,
+        scrollDirection: scrollDirection ?? Axis.vertical,
+        semanticChildCount: semanticChildCount,
+        primary: primary,
+        clipBehavior: clipBehavior ?? Clip.hardEdge,
+        keyboardDismissBehavior:
+            keyboardDismissBehavior ?? ScrollViewKeyboardDismissBehavior.manual,
+        anchor: anchor ?? 0.0,
+        restorationId: restorationId,
+        center: center,
+        physics: physics,
+        slivers: slivers!,
+        dragStartBehavior: dragStartBehavior ?? DragStartBehavior.start,
+        reverse: reverse,
+      );
+    } else if (childView is Scrollable) {
+      body = Scrollable(
+        physics: widget.physics,
+        controller: childView.controller,
+        axisDirection: childView.axisDirection,
+        semanticChildCount: childView.semanticChildCount,
+        dragStartBehavior: childView.dragStartBehavior,
+        viewportBuilder: (context, offset) {
+          Viewport viewport =
+              childView.viewportBuilder(context, offset) as Viewport;
+          if (widget.onRefresh != null) {
+            slivers?.insert(
+                0, const SliverToBoxAdapter(child: ARefreshIndicator()));
+          }
+          if (widget.onLoadingMore != null) {
+            slivers?.add(const SliverToBoxAdapter(child: LoadingIndicator()));
+          }
+          return viewport;
+        },
+      );
+    }
+    return body;
+  }
 
   @override
   Widget build(BuildContext context) {
+    Widget? body;
+
+    List<Widget>? slivers = _buildSliversByChild(
+      context,
+      widget.child,
+    );
+    body = _buildBodyBySlivers(widget.child, slivers);
     return NotificationListener(
       onNotification: _notifiListener,
-      child: widget.child,
+      child: body!,
     );
   }
 
   _checkLoadMore(double overscroll) {
-    double step =
-        overscroll / ((_loadMoreDragOffset > widget.maxLoadingDragOffset) ? 3 : 1);
+    double step = overscroll /
+        ((_loadMoreDragOffset > widget.maxLoadingDragOffset) ? 3 : 1);
     _loadMoreDragOffset = _loadMoreDragOffset + (widget.reverse ? -step : step);
-    if (_loadMoreDragOffset > widget.maxLoadingDragOffset &&
+    if (_loadMoreDragOffset > widget.maxLoadingDragOffset/2 &&
         _loadMoreStatus != LoadMoreIndicatorStatus.loading) {
+      // print("load more arrived");
       _loadMoreStatus = LoadMoreIndicatorStatus.arrived;
     }
   }
 
   _checkRefresh(double overscroll) {
-    double step =
-        overscroll / ((_refreshDragOffset > widget.maxRefreshDragOffset) ? 3 : 2);
+    double step = overscroll /
+        ((_refreshDragOffset > widget.maxRefreshDragOffset) ? 3 : 2);
     _refreshDragOffset = _refreshDragOffset + (widget.reverse ? step : -step);
     if (_refreshDragOffset > widget.maxRefreshDragOffset &&
         _refreshStatus != RefreshIndicatorStatus.refresh) {
@@ -146,27 +311,26 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
     }
   }
 
-
   bool _notifiListener(ScrollNotification notification) {
     switch (notification.runtimeType) {
       case ScrollStartNotification:
         break;
       case ScrollUpdateNotification:
         notification as ScrollUpdateNotification;
-        if(notification.scrollDelta!=null && notification.scrollDelta!<0){
-            _checkRefresh(notification.scrollDelta??0);
+        if (notification.scrollDelta != null && notification.scrollDelta! < 0) {
+          _checkRefresh(notification.scrollDelta ?? 0);
         }
         if (notification.metrics.extentAfter > 0.0) {
           if (widget.reverse && widget.onLoadingMore != null) {
-            _checkLoadMore(notification.scrollDelta??0);
+            _checkLoadMore(notification.scrollDelta ?? 0);
           } else if (widget.onRefresh != null) {
-            _checkRefresh(notification.scrollDelta??0);
+            _checkRefresh(notification.scrollDelta ?? 0);
           }
         } else if (notification.metrics.extentBefore > 0.0) {
           if (widget.reverse && widget.onRefresh != null) {
-            _checkRefresh(notification.scrollDelta??0);
+            _checkRefresh(notification.scrollDelta ?? 0);
           } else if (widget.onLoadingMore != null) {
-            _checkLoadMore(notification.scrollDelta??0);
+            _checkLoadMore(notification.scrollDelta ?? 0);
           }
         }
         break;
@@ -216,17 +380,19 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   Future _doRefresh() async {
     _refreshStatus = RefreshIndicatorStatus.refresh;
     _notificationRefreshIndicator();
-    if (kDebugMode) {
-      print("refresh");
-    }
+
     widget.onRefresh?.call();
   }
 
-  _doLoadMore() async {
-    if (kDebugMode) {
-      print("_doLoadMore");
-    }
+  _doLoadMore(
+      {Duration duration = const Duration(milliseconds: 300),
+      Curve curve = Curves.linear}) async {
     _loadMoreStatus = LoadMoreIndicatorStatus.loading;
+    _loadMoreDragOffset = widget.maxLoadingDragOffset;
+    ScrollController? scrollController =
+        widget.scrollController ?? refreshScrollController;
+    scrollController?.jumpTo(scrollController.position.maxScrollExtent +
+        widget.maxLoadingDragOffset);
     widget.onLoadingMore?.call();
   }
 
@@ -241,12 +407,12 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   }
 
   void _notificationRefreshIndicator() {
-    _refreshStream
-        .add(RefreshIndicatorStatusData(_refreshStatus, offset: _refreshDragOffset));
+    _refreshStream.add(
+        RefreshIndicatorStatusData(_refreshStatus, offset: _refreshDragOffset));
   }
 
   void _notificationLoadMoreIndicator() {
-    _loadMoreStream
-        .add(LoadingIndicatorStatusData(_loadMoreStatus, offset: _loadMoreDragOffset));
+    _loadMoreStream.add(LoadingIndicatorStatusData(_loadMoreStatus,
+        offset: _loadMoreDragOffset));
   }
 }
