@@ -14,6 +14,7 @@ class RefreshLoadingController {
 
   refreshCompleted() {
     headerMode?.value = RefreshIndicatorStatus.done;
+    headerMode?.value = RefreshIndicatorStatus.snap;
   }
 
   loadingCompleted(){
