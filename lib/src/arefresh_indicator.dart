@@ -42,6 +42,12 @@ class _ARefreshIndicatorrState extends State<ARefreshIndicator>
         lowerBound: 0.0,
         upperBound: 50.0,
         duration: const Duration(milliseconds: 1000));
+    // _animationController.addStatusListener((status) {
+    //   print(status);
+    //   if(AnimationStatus.completed == status){
+    //     print("completed");
+    //   }
+    // });
   }
 
   @override

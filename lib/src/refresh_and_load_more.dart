@@ -22,6 +22,8 @@ enum LoadMoreIndicatorStatus {
   done, // 完成
   canceled, // 取消拖动
   error, // 错误
+  withoutNextPage,
+  empty
 }
 enum RefreshIndicatorStatus {
   drag, // 拖动中
@@ -148,8 +150,12 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
         case LoadMoreIndicatorStatus.done:
           _loadMoreStatus = loadMoreIndicatorStatus!;
           _loadMoreDragOffset = 0;
+          // ScrollController? scrollController =
+          //     widget.scrollController ?? refreshScrollController;
+          // scrollController?.jumpTo(scrollController.position.pixels+widget.maxLoadingDragOffset);
           widget.refreshLoadingController?.footerMode?.value =
               LoadMoreIndicatorStatus.snap;
+
           break;
       }
     });
@@ -292,7 +298,7 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
 
   _checkLoadMore(double overscroll) {
     double step = overscroll /
-        ((_loadMoreDragOffset > widget.maxLoadingDragOffset) ? 3 : 1);
+        ((_loadMoreDragOffset > widget.maxLoadingDragOffset) ? 3 : 0.5);
     _loadMoreDragOffset = _loadMoreDragOffset + (widget.reverse ? -step : step);
     if (_loadMoreDragOffset > widget.maxLoadingDragOffset / 2 &&
         _loadMoreStatus != LoadMoreIndicatorStatus.loading) {
@@ -317,16 +323,23 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
         break;
       case ScrollUpdateNotification:
         notification as ScrollUpdateNotification;
-        if (notification.scrollDelta != null && notification.scrollDelta! < 0) {
-          _checkRefresh(notification.scrollDelta ?? 0);
-        }
-        if (notification.metrics.extentAfter > 0.0) {
+        // print("-----------------------------------------------------------------");
+        // print("extentAfter: ${notification.metrics.extentAfter}" );
+        // print("extentBefore: ${notification.metrics.extentBefore}" );
+        // print("scrollDelta: ${notification.scrollDelta}" );
+        // print("pixels: ${notification.metrics.pixels}" );
+        // print("-----------------------------------------------------------------");
+        // if (notification.scrollDelta != null && notification.scrollDelta! < 0) {
+        //   _checkRefresh(notification.scrollDelta ?? 0);
+        // }
+        if (notification.metrics.extentBefore == 0.0 && notification.metrics.pixels == 0) {
           if (widget.reverse && widget.onLoadingMore != null) {
             _checkLoadMore(notification.scrollDelta ?? 0);
           } else if (widget.onRefresh != null) {
             _checkRefresh(notification.scrollDelta ?? 0);
           }
-        } else if (notification.metrics.extentBefore > 0.0) {
+        }
+         if (notification.metrics.extentAfter == 0.0) {
           if (widget.reverse && widget.onRefresh != null) {
             _checkRefresh(notification.scrollDelta ?? 0);
           } else if (widget.onLoadingMore != null) {

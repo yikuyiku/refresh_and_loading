@@ -20,4 +20,11 @@ class RefreshLoadingController {
   loadingCompleted(){
     footerMode?.value = LoadMoreIndicatorStatus.done;
   }
+
+  withoutNextPage(){
+    footerMode?.value = LoadMoreIndicatorStatus.withoutNextPage;
+  }
+  emptyData(){
+    footerMode?.value = LoadMoreIndicatorStatus.empty;
+  }
 }
