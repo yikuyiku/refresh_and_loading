@@ -53,6 +53,7 @@ class _ARefreshIndicatorrState extends State<ARefreshIndicator>
   @override
   Widget build(BuildContext context) {
     if (refreshAndLoadMoreState != null) {
+
       return AnimatedBuilder(
           animation: _animationController,
           builder: (BuildContext context, Widget? child) {
