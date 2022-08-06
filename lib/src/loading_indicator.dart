@@ -1,9 +1,9 @@
 part of refresh_and_loading;
 
 class LoadingIndicator extends StatefulWidget {
-  const LoadingIndicator({
-    Key? key,
-  }) : super(key: key);
+  const LoadingIndicator({Key? key, required this.endOfListWidget})
+      : super(key: key);
+  final Widget endOfListWidget;
 
   @override
   State<LoadingIndicator> createState() => _LoadingIndicatorState();
@@ -20,6 +20,7 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
   // LoadMoreIndicatorStatus _loadMoreIndicatorStatus =
   //     LoadMoreIndicatorStatus.snap;
   late RefreshLoadingController refreshLoadingController;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -34,8 +35,7 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
 
       if (refreshAndLoadMoreState!.widget.refreshLoadingController != null) {
         refreshLoadingController =
-        refreshAndLoadMoreState!.widget.refreshLoadingController!;
-
+            refreshAndLoadMoreState!.widget.refreshLoadingController!;
 
         refreshAndLoadMoreState!
             .widget.refreshLoadingController?.loadMoreDragOffset
@@ -65,12 +65,7 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
               (BuildContext context, loadMoreIndicatorStatus, Widget? child) {
             switch (loadMoreIndicatorStatus) {
               case LoadMoreIndicatorStatus.withoutNextPage:
-                return Container(
-                  height: _maxLoadingDragOffset,
-                  alignment: Alignment.center,
-                  child: const Text("這已經是列表最底了"),
-                );
-
+                return widget.endOfListWidget;
               case LoadMoreIndicatorStatus.loading:
               case LoadMoreIndicatorStatus.drag:
               case LoadMoreIndicatorStatus.snap:

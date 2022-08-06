@@ -79,7 +79,6 @@ class _HomePageState extends State<HomePage> {
           onLoadingMore: _onLoading,
           controller: _refreshLoadingController,
           child: ListView.builder(
-              shrinkWrap: true,
               primary: false,
               physics: const BouncingScrollPhysics(),
               itemCount: items.length,

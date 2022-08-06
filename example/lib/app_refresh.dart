@@ -52,7 +52,13 @@ class AppRefresh<T> extends StatelessWidget {
         dragStartBehavior: dragStartBehavior,
         physics: physics,
         child: child,
-        footerIndicator: const LoadingIndicator(),
+        footerIndicator: LoadingIndicator(
+          endOfListWidget: Container(
+            height: 50,
+            alignment: Alignment.center,
+            child: const Text("That is the end of the list"),
+          ),
+        ),
         headerIndicator: const ARefreshIndicator(),
         emptyWidget: const Center(
           child: Text("Empty Data"),

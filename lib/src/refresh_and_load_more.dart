@@ -195,10 +195,10 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
       ];
     }
     if (widget.onRefresh != null) {
-      slivers?.insert(0, const SliverToBoxAdapter(child: ARefreshIndicator()));
+      slivers?.insert(0,  SliverToBoxAdapter(child: widget.headerIndicator));
     }
     if (widget.onLoadingMore != null) {
-      slivers?.add(const SliverToBoxAdapter(child: LoadingIndicator()));
+      slivers?.add( SliverToBoxAdapter(child: widget.footerIndicator));
     }
 
     return slivers;
