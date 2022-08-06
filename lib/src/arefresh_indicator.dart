@@ -19,12 +19,13 @@ class _ARefreshIndicatorrState extends State<ARefreshIndicator>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    refreshAndLoadMoreState =
-        context.findAncestorStateOfType<RefreshAndLoadMoreState>();
-    _maxRefreshDragOffset =
-        refreshAndLoadMoreState!.widget.maxRefreshDragOffset;
+
     if (_isDependencies == false) {
       _isDependencies = true;
+      refreshAndLoadMoreState =
+          context.findAncestorStateOfType<RefreshAndLoadMoreState>();
+      _maxRefreshDragOffset =
+          refreshAndLoadMoreState!.widget.maxRefreshDragOffset;
       refreshAndLoadMoreState?.refreshStream
           .listen((RefreshIndicatorStatusData event) {
         if (event.offset != null) {
@@ -32,28 +33,20 @@ class _ARefreshIndicatorrState extends State<ARefreshIndicator>
           _refreshIndicatorStatus = event.indicatorStatus;
         }
       });
+      _animationController = AnimationController(
+          lowerBound: 0,
+          upperBound: _maxRefreshDragOffset * 2,
+          vsync: this,
+          duration: const Duration(milliseconds: 1000));
     }
   }
 
   @override
-  initState() {
-    _animationController = AnimationController(
-        vsync: this,
-        lowerBound: 0.0,
-        upperBound: 50.0,
-        duration: const Duration(milliseconds: 1000));
-    // _animationController.addStatusListener((status) {
-    //   print(status);
-    //   if(AnimationStatus.completed == status){
-    //     print("completed");
-    //   }
-    // });
-  }
+  initState() {}
 
   @override
   Widget build(BuildContext context) {
     if (refreshAndLoadMoreState != null) {
-
       return AnimatedBuilder(
           animation: _animationController,
           builder: (BuildContext context, Widget? child) {
@@ -62,8 +55,7 @@ class _ARefreshIndicatorrState extends State<ARefreshIndicator>
             progress = progress > 1 ? 1 : progress;
             return Container(
               height: offset,
-              alignment: Alignment.topCenter,
-              padding: EdgeInsets.only(top: _maxRefreshDragOffset / 2 - 15),
+              alignment: Alignment.center,
               child: _refreshIndicatorStatus == RefreshIndicatorStatus.refresh
                   ? const CupertinoActivityIndicator(radius: 15)
                   : CupertinoActivityIndicator.partiallyRevealed(

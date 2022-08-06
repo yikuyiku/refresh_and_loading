@@ -6,24 +6,28 @@ class RefreshLoadingController {
         ValueNotifier<RefreshIndicatorStatus>(RefreshIndicatorStatus.snap);
     footerMode =
         ValueNotifier<LoadMoreIndicatorStatus>(LoadMoreIndicatorStatus.snap);
+    loadMoreDragOffset = ValueNotifier<double>(0);
   }
 
   ValueNotifier<RefreshIndicatorStatus>? headerMode;
 
   ValueNotifier<LoadMoreIndicatorStatus>? footerMode;
+  late ValueNotifier<double> loadMoreDragOffset;
+
   refreshCompleted() {
     headerMode?.value = RefreshIndicatorStatus.done;
     headerMode?.value = RefreshIndicatorStatus.snap;
   }
 
-  loadingCompleted(){
+  loadingCompleted() {
     footerMode?.value = LoadMoreIndicatorStatus.done;
   }
 
-  withoutNextPage(){
+  withoutNextPage() {
     footerMode?.value = LoadMoreIndicatorStatus.withoutNextPage;
   }
-  emptyData(){
-    footerMode?.value = LoadMoreIndicatorStatus.empty;
+
+  emptyData() {
+    headerMode?.value = RefreshIndicatorStatus.empty;
   }
 }

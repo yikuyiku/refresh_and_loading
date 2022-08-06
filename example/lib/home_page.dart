@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage> {
     print("refresh");
     items.clear();
 
-
+    // _refreshLoadingController.emptyData();
     items.add((items.length).toString());
     items.add((items.length).toString());
     items.add((items.length).toString());
@@ -61,9 +61,9 @@ class _HomePageState extends State<HomePage> {
     items.add((items.length).toString());
     items.add((items.length).toString());
     items.add((items.length).toString());
-    // _refreshLoadingController.loadingCompleted();
+    _refreshLoadingController.loadingCompleted();
     print("withoutNextPage");
-    _refreshLoadingController.withoutNextPage();
+    // _refreshLoadingController.withoutNextPage();
     setState(() {});
     // if (mounted) setState(() {});
   }

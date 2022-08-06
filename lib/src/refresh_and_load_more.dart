@@ -21,8 +21,7 @@ enum LoadMoreIndicatorStatus {
   done, // 完成
   canceled, // 取消拖动
   error, // 错误
-  withoutNextPage,
-  empty
+  withoutNextPage
 }
 enum RefreshIndicatorStatus {
   drag, // 拖动中
@@ -32,6 +31,7 @@ enum RefreshIndicatorStatus {
   done, // 完成
   canceled, // 取消拖动
   error, // 错误
+  empty
 }
 
 class RefreshAndLoadingEvent {
@@ -61,8 +61,12 @@ class RefreshAndLoadMore extends StatefulWidget {
     this.dragStartBehavior,
     this.physics,
     this.refreshLoadingController,
+    this.headerIndicator,
+    this.footerIndicator,
+    Widget? emptyWidget,
     required this.child,
-  }) : super(key: key);
+  })  : emptyWidget = emptyWidget ?? const SizedBox(),
+        super(key: key);
   final bool reverse;
   final double maxRefreshDragOffset;
   final double maxLoadingDragOffset;
@@ -79,6 +83,9 @@ class RefreshAndLoadMore extends StatefulWidget {
   final ScrollController? scrollController;
   final DragStartBehavior? dragStartBehavior;
   final ScrollPhysics? physics;
+  final Widget? headerIndicator;
+  final Widget? footerIndicator;
+  final Widget emptyWidget;
 
   @override
   State<RefreshAndLoadMore> createState() => RefreshAndLoadMoreState();
@@ -87,21 +94,19 @@ class RefreshAndLoadMore extends StatefulWidget {
 class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   Stream<RefreshIndicatorStatusData> get refreshStream => _refreshStream.stream;
 
-  Stream<LoadingIndicatorStatusData> get loadMoreStream =>
-      _loadMoreStream.stream;
+  // Stream<LoadingIndicatorStatusData> get loadMoreStream =>
+  //     _loadMoreStream.stream;
   late final StreamController<RefreshIndicatorStatusData> _refreshStream;
-  late final StreamController<LoadingIndicatorStatusData> _loadMoreStream;
+
+  // late final StreamController<LoadingIndicatorStatusData> _loadMoreStream;
 
   RefreshIndicatorStatus _refreshStatus = RefreshIndicatorStatus.done;
-
-  // LoadMoreIndicatorStatus _loadMoreStatus = LoadMoreIndicatorStatus.done;
-
   double _refreshDragOffsetValue = 0;
 
   double get _refreshDragOffset => _refreshDragOffsetValue;
 
   set _refreshDragOffset(double value) {
-    value = math.max(0.0, math.min(value, 300));
+    value = math.max(0.0, math.min(value, widget.maxRefreshDragOffset*2));
     _refreshDragOffsetValue = value;
     _notificationRefreshIndicator();
   }
@@ -111,7 +116,7 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   double get _loadMoreDragOffset => _loadMoreDragOffsetValue;
 
   set _loadMoreDragOffset(double value) {
-    value = math.max(0.0, math.min(value, 300));
+    value = math.max(0.0, math.min(value, widget.maxLoadingDragOffset*2));
     _loadMoreDragOffsetValue = value;
     _notificationLoadMoreIndicator();
   }
@@ -134,8 +139,8 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
       _refreshStream = StreamController<RefreshIndicatorStatusData>.broadcast();
     }
     if (widget.onLoadingMore != null) {
-      _loadMoreStream =
-          StreamController<LoadingIndicatorStatusData>.broadcast();
+      // _loadMoreStream =
+      //     StreamController<LoadingIndicatorStatusData>.broadcast();
     }
     widget.refreshLoadingController?.headerMode?.addListener(() {
       RefreshIndicatorStatus? refreshIndicatorStatus =
@@ -173,7 +178,6 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
     List<Widget>? slivers;
     if (child is ScrollView) {
       if (child is BoxScrollView) {
-        //avoid system inject padding when own indicator top or bottom
         Widget sliver = child.buildChildLayout(context);
         if (child.padding != null) {
           slivers = [SliverPadding(sliver: sliver, padding: child.padding!)];
@@ -274,10 +278,10 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
               childView.viewportBuilder(context, offset) as Viewport;
           if (widget.onRefresh != null) {
             slivers?.insert(
-                0, const SliverToBoxAdapter(child: ARefreshIndicator()));
+                0, SliverToBoxAdapter(child: widget.headerIndicator));
           }
           if (widget.onLoadingMore != null) {
-            slivers?.add(const SliverToBoxAdapter(child: LoadingIndicator()));
+            slivers?.add(SliverToBoxAdapter(child: widget.footerIndicator));
           }
           return viewport;
         },
@@ -295,10 +299,16 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
       widget.child,
     );
     body = _buildBodyBySlivers(widget.child, slivers);
-    return NotificationListener(
-      onNotification: _notifiListener,
-      child: body!,
-    );
+    return ValueListenableBuilder(
+        valueListenable: widget.refreshLoadingController!.headerMode!,
+        builder: (context, data, child) {
+          return NotificationListener(
+            onNotification: _notifiListener,
+            child: data == RefreshIndicatorStatus.empty
+                ? widget.emptyWidget
+                : body!,
+          );
+        });
   }
 
   _checkLoadMore(double overscroll) {
@@ -313,7 +323,6 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
       if (_loadMoreDragOffset > widget.maxLoadingDragOffset / 2 &&
           widget.refreshLoadingController?.footerMode?.value !=
               LoadMoreIndicatorStatus.loading) {
-        // print("load more arrived");
         widget.refreshLoadingController?.footerMode?.value =
             LoadMoreIndicatorStatus.arrived;
       }
@@ -336,15 +345,6 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
         break;
       case ScrollUpdateNotification:
         notification as ScrollUpdateNotification;
-        // print("-----------------------------------------------------------------");
-        // print("extentAfter: ${notification.metrics.extentAfter}" );
-        // print("extentBefore: ${notification.metrics.extentBefore}" );
-        // print("scrollDelta: ${notification.scrollDelta}" );
-        // print("pixels: ${notification.metrics.pixels}" );
-        // print("-----------------------------------------------------------------");
-        // if (notification.scrollDelta != null && notification.scrollDelta! < 0) {
-        //   _checkRefresh(notification.scrollDelta ?? 0);
-        // }
         if (notification.metrics.extentBefore == 0.0 &&
             notification.metrics.pixels == 0) {
           if (widget.reverse && widget.onLoadingMore != null) {
@@ -363,13 +363,24 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
         break;
       case OverscrollNotification:
         notification as OverscrollNotification;
-        if (notification.metrics.extentAfter > 0.0) {
+        // if (kDebugMode) {
+        //   print(
+        //       "-----------------------------------------------------------------");
+        //
+        //   print("extentAfter: ${notification.metrics.extentAfter}");
+        //   print("extentBefore: ${notification.metrics.extentBefore}");
+        //   print("overscroll: ${notification.overscroll}");
+        //   print("pixels: ${notification.metrics.pixels}");
+        //   print(
+        //       "-----------------------------------------------------------------");
+        // }
+        if (notification.metrics.extentBefore == 0.0) {
           if (widget.reverse && widget.onLoadingMore != null) {
             _checkLoadMore(notification.overscroll);
           } else if (widget.onRefresh != null) {
             _checkRefresh(notification.overscroll);
           }
-        } else if (notification.metrics.extentBefore > 0.0) {
+        } else if (notification.metrics.extentAfter == 0.0) {
           if (widget.reverse && widget.onRefresh != null) {
             _checkRefresh(notification.overscroll);
           } else if (widget.onLoadingMore != null) {
@@ -378,9 +389,6 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
         }
         break;
       case ScrollEndNotification:
-        if (kDebugMode) {
-          print("ScrollEndNotification");
-        }
         if (_refreshDragOffset > widget.maxRefreshDragOffset &&
             _refreshStatus == RefreshIndicatorStatus.arrived) {
           _refreshDragOffset = widget.maxRefreshDragOffset;
@@ -396,14 +404,15 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
                 LoadMoreIndicatorStatus.arrived &&
             widget.refreshLoadingController?.footerMode?.value !=
                 LoadMoreIndicatorStatus.loading) {
-          print("${widget.refreshLoadingController?.footerMode?.value.toString()}22222");
           widget.refreshLoadingController?.footerMode?.value =
               LoadMoreIndicatorStatus.loading;
           _loadMoreDragOffset = widget.maxLoadingDragOffset;
-          _notificationRefreshIndicator();
+          // _notificationRefreshIndicator();
           _doLoadMore();
         } else if (widget.refreshLoadingController?.footerMode?.value !=
-            LoadMoreIndicatorStatus.withoutNextPage) {
+                LoadMoreIndicatorStatus.withoutNextPage &&
+            widget.refreshLoadingController?.footerMode?.value !=
+                LoadMoreIndicatorStatus.loading) {
           _putAwayLoadMore();
         }
         break;
@@ -448,7 +457,7 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   }
 
   void _notificationLoadMoreIndicator() {
-    _loadMoreStream
-        .add(LoadingIndicatorStatusData(offset: _loadMoreDragOffset));
+    widget.refreshLoadingController?.loadMoreDragOffset?.value =
+        _loadMoreDragOffset;
   }
 }

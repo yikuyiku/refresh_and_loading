@@ -19,23 +19,31 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
 
   // LoadMoreIndicatorStatus _loadMoreIndicatorStatus =
   //     LoadMoreIndicatorStatus.snap;
-
+  late RefreshLoadingController refreshLoadingController;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    refreshAndLoadMoreState =
-        context.findAncestorStateOfType<RefreshAndLoadMoreState>();
 
-    _maxLoadingDragOffset =
-        refreshAndLoadMoreState!.widget.maxLoadingDragOffset;
     if (_isDependencies == false) {
       _isDependencies = true;
-      refreshAndLoadMoreState?.loadMoreStream
-          .listen((LoadingIndicatorStatusData event) {
-        if (event.offset != null) {
-          _animationController.value = event.offset!;
-        }
-      });
+      refreshAndLoadMoreState =
+          context.findAncestorStateOfType<RefreshAndLoadMoreState>();
+
+      _maxLoadingDragOffset =
+          refreshAndLoadMoreState!.widget.maxLoadingDragOffset;
+
+      if (refreshAndLoadMoreState!.widget.refreshLoadingController != null) {
+        refreshLoadingController =
+        refreshAndLoadMoreState!.widget.refreshLoadingController!;
+
+
+        refreshAndLoadMoreState!
+            .widget.refreshLoadingController?.loadMoreDragOffset
+            .addListener(() {
+          _animationController.value =
+              refreshLoadingController.loadMoreDragOffset.value;
+        });
+      }
     }
   }
 
@@ -52,9 +60,9 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
   Widget build(BuildContext context) {
     if (refreshAndLoadMoreState != null) {
       return ValueListenableBuilder<LoadMoreIndicatorStatus>(
-          valueListenable: refreshAndLoadMoreState!
-              .widget.refreshLoadingController!.footerMode!,
-          builder: (BuildContext context, loadMoreIndicatorStatus, Widget? child) {
+          valueListenable: refreshLoadingController.footerMode!,
+          builder:
+              (BuildContext context, loadMoreIndicatorStatus, Widget? child) {
             switch (loadMoreIndicatorStatus) {
               case LoadMoreIndicatorStatus.withoutNextPage:
                 return Container(
@@ -67,11 +75,9 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
               case LoadMoreIndicatorStatus.drag:
               case LoadMoreIndicatorStatus.snap:
               case LoadMoreIndicatorStatus.arrived:
-                print(loadMoreIndicatorStatus);
                 return AnimatedBuilder(
                     animation: _animationController,
                     builder: (BuildContext context, Widget? child) {
-                      print(loadMoreIndicatorStatus);
                       double offset =
                           _animationController.value * _maxLoadingDragOffset;
                       double progress = offset / _maxLoadingDragOffset;

@@ -42,7 +42,7 @@ class AppRefresh<T> extends StatelessWidget {
         refreshLoadingController: controller,
         onRefresh: onRefresh,
         onLoadingMore: onLoadingMore,
-        maxRefreshDragOffset: 80,
+        maxRefreshDragOffset: 100,
         maxLoadingDragOffset: 60,
         primary: primary,
         cacheExtent: cacheExtent,
@@ -51,6 +51,11 @@ class AppRefresh<T> extends StatelessWidget {
         scrollController: scrollController,
         dragStartBehavior: dragStartBehavior,
         physics: physics,
-        child: child);
+        child: child,
+        footerIndicator: const LoadingIndicator(),
+        headerIndicator: const ARefreshIndicator(),
+        emptyWidget: const Center(
+          child: Text("Empty Data"),
+        ));
   }
 }
