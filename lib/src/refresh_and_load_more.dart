@@ -8,9 +8,8 @@ class RefreshIndicatorStatusData {
 }
 
 class LoadingIndicatorStatusData {
-  const LoadingIndicatorStatusData(this.indicatorStatus, {this.offset});
+  const LoadingIndicatorStatusData({this.offset});
 
-  final LoadMoreIndicatorStatus indicatorStatus;
   final double? offset;
 }
 
@@ -94,7 +93,8 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   late final StreamController<LoadingIndicatorStatusData> _loadMoreStream;
 
   RefreshIndicatorStatus _refreshStatus = RefreshIndicatorStatus.done;
-  LoadMoreIndicatorStatus _loadMoreStatus = LoadMoreIndicatorStatus.done;
+
+  // LoadMoreIndicatorStatus _loadMoreStatus = LoadMoreIndicatorStatus.done;
 
   double _refreshDragOffsetValue = 0;
 
@@ -117,6 +117,12 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   }
 
   ScrollController? refreshScrollController;
+
+  @override
+  void didUpdateWidget(covariant RefreshAndLoadMore oldWidget) {
+    // widget.refreshLoadingController = oldWidget.refreshLoadingController;
+    super.didUpdateWidget(oldWidget);
+  }
 
   @override
   void initState() {
@@ -148,7 +154,6 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
           widget.refreshLoadingController?.footerMode!.value;
       switch (loadMoreIndicatorStatus) {
         case LoadMoreIndicatorStatus.done:
-          _loadMoreStatus = loadMoreIndicatorStatus!;
           _loadMoreDragOffset = 0;
           // ScrollController? scrollController =
           //     widget.scrollController ?? refreshScrollController;
@@ -297,13 +302,21 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   }
 
   _checkLoadMore(double overscroll) {
-    double step = overscroll /
-        ((_loadMoreDragOffset > widget.maxLoadingDragOffset) ? 3 : 0.5);
-    _loadMoreDragOffset = _loadMoreDragOffset + (widget.reverse ? -step : step);
-    if (_loadMoreDragOffset > widget.maxLoadingDragOffset / 2 &&
-        _loadMoreStatus != LoadMoreIndicatorStatus.loading) {
-      // print("load more arrived");
-      _loadMoreStatus = LoadMoreIndicatorStatus.arrived;
+    if (widget.refreshLoadingController?.footerMode?.value !=
+            LoadMoreIndicatorStatus.withoutNextPage &&
+        widget.refreshLoadingController?.footerMode?.value !=
+            LoadMoreIndicatorStatus.loading) {
+      double step = overscroll /
+          ((_loadMoreDragOffset > widget.maxLoadingDragOffset) ? 3 : 0.2);
+      _loadMoreDragOffset =
+          _loadMoreDragOffset + (widget.reverse ? -step : step);
+      if (_loadMoreDragOffset > widget.maxLoadingDragOffset / 2 &&
+          widget.refreshLoadingController?.footerMode?.value !=
+              LoadMoreIndicatorStatus.loading) {
+        // print("load more arrived");
+        widget.refreshLoadingController?.footerMode?.value =
+            LoadMoreIndicatorStatus.arrived;
+      }
     }
   }
 
@@ -332,14 +345,15 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
         // if (notification.scrollDelta != null && notification.scrollDelta! < 0) {
         //   _checkRefresh(notification.scrollDelta ?? 0);
         // }
-        if (notification.metrics.extentBefore == 0.0 && notification.metrics.pixels == 0) {
+        if (notification.metrics.extentBefore == 0.0 &&
+            notification.metrics.pixels == 0) {
           if (widget.reverse && widget.onLoadingMore != null) {
             _checkLoadMore(notification.scrollDelta ?? 0);
           } else if (widget.onRefresh != null) {
             _checkRefresh(notification.scrollDelta ?? 0);
           }
         }
-         if (notification.metrics.extentAfter == 0.0) {
+        if (notification.metrics.extentAfter == 0.0) {
           if (widget.reverse && widget.onRefresh != null) {
             _checkRefresh(notification.scrollDelta ?? 0);
           } else if (widget.onLoadingMore != null) {
@@ -364,6 +378,9 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
         }
         break;
       case ScrollEndNotification:
+        if (kDebugMode) {
+          print("ScrollEndNotification");
+        }
         if (_refreshDragOffset > widget.maxRefreshDragOffset &&
             _refreshStatus == RefreshIndicatorStatus.arrived) {
           _refreshDragOffset = widget.maxRefreshDragOffset;
@@ -375,14 +392,19 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
           _refreshDragOffset = widget.maxRefreshDragOffset;
         }
         if (_loadMoreDragOffset > widget.maxLoadingDragOffset &&
-            _loadMoreStatus == LoadMoreIndicatorStatus.arrived) {
+            widget.refreshLoadingController?.footerMode?.value ==
+                LoadMoreIndicatorStatus.arrived &&
+            widget.refreshLoadingController?.footerMode?.value !=
+                LoadMoreIndicatorStatus.loading) {
+          print("${widget.refreshLoadingController?.footerMode?.value.toString()}22222");
+          widget.refreshLoadingController?.footerMode?.value =
+              LoadMoreIndicatorStatus.loading;
           _loadMoreDragOffset = widget.maxLoadingDragOffset;
           _notificationRefreshIndicator();
           _doLoadMore();
-        } else if (_loadMoreStatus != LoadMoreIndicatorStatus.loading) {
+        } else if (widget.refreshLoadingController?.footerMode?.value !=
+            LoadMoreIndicatorStatus.withoutNextPage) {
           _putAwayLoadMore();
-        } else if (_loadMoreStatus == LoadMoreIndicatorStatus.loading) {
-          _loadMoreDragOffset = widget.maxLoadingDragOffset;
         }
         break;
     }
@@ -397,16 +419,16 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
     widget.onRefresh?.call();
   }
 
-  _doLoadMore(
-      {Duration duration = const Duration(milliseconds: 300),
-      Curve curve = Curves.linear}) async {
-    _loadMoreStatus = LoadMoreIndicatorStatus.loading;
-    _loadMoreDragOffset = widget.maxLoadingDragOffset;
-    ScrollController? scrollController =
-        widget.scrollController ?? refreshScrollController;
-    scrollController?.jumpTo(scrollController.position.maxScrollExtent +
-        widget.maxLoadingDragOffset);
-    widget.onLoadingMore?.call();
+  _doLoadMore() async {
+    if (widget.refreshLoadingController?.footerMode?.value !=
+        LoadMoreIndicatorStatus.withoutNextPage) {
+      _loadMoreDragOffset = widget.maxLoadingDragOffset;
+      ScrollController? scrollController =
+          widget.scrollController ?? refreshScrollController;
+      scrollController?.jumpTo(scrollController.position.maxScrollExtent +
+          widget.maxLoadingDragOffset);
+      widget.onLoadingMore?.call();
+    }
   }
 
   _putAwayRefresh() {
@@ -415,7 +437,8 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   }
 
   _putAwayLoadMore() {
-    _loadMoreStatus = LoadMoreIndicatorStatus.canceled;
+    widget.refreshLoadingController?.footerMode?.value =
+        LoadMoreIndicatorStatus.canceled;
     _loadMoreDragOffset = 0;
   }
 
@@ -425,7 +448,7 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   }
 
   void _notificationLoadMoreIndicator() {
-    _loadMoreStream.add(LoadingIndicatorStatusData(_loadMoreStatus,
-        offset: _loadMoreDragOffset));
+    _loadMoreStream
+        .add(LoadingIndicatorStatusData(offset: _loadMoreDragOffset));
   }
 }

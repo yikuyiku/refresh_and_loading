@@ -17,8 +17,8 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
   late final AnimationController _animationController;
   bool _isDependencies = false;
 
-  LoadMoreIndicatorStatus _loadMoreIndicatorStatus =
-      LoadMoreIndicatorStatus.snap;
+  // LoadMoreIndicatorStatus _loadMoreIndicatorStatus =
+  //     LoadMoreIndicatorStatus.snap;
 
   @override
   void didChangeDependencies() {
@@ -34,7 +34,6 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
           .listen((LoadingIndicatorStatusData event) {
         if (event.offset != null) {
           _animationController.value = event.offset!;
-          _loadMoreIndicatorStatus = event.indicatorStatus;
         }
       });
     }
@@ -52,44 +51,49 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
   @override
   Widget build(BuildContext context) {
     if (refreshAndLoadMoreState != null) {
-      // return ValueListenableBuilder<LoadMoreIndicatorStatus>(
-      //   valueListenable:refreshAndLoadMoreState?.widget.refreshLoadingController?.footerMode!, builder: (BuildContext context, value, Widget? child) {  },
-      // );
-      // switch (_loadMoreIndicatorStatus) {
-      //   case LoadMoreIndicatorStatus.withoutNextPage:
-      //     return Container(
-      //       height: _maxLoadingDragOffset,
-      //       alignment: Alignment.center,
-      //       child: const Text("這已經是列表最底了"),
-      //     );
-      //
-      //   case LoadMoreIndicatorStatus.loading:
-      //   case LoadMoreIndicatorStatus.drag:
-      //   case LoadMoreIndicatorStatus.snap:
-      //   case LoadMoreIndicatorStatus.arrived:
-      // print(_loadMoreIndicatorStatus);
-      return AnimatedBuilder(
-          animation: _animationController,
-          builder: (BuildContext context, Widget? child) {
-            double offset = _animationController.value * _maxLoadingDragOffset;
-            double progress = offset / _maxLoadingDragOffset;
-            progress = progress > 1 ? 1 : progress;
-            return Container(
-              height: offset,
-              alignment: Alignment.topCenter,
-              padding: EdgeInsets.only(top: _maxLoadingDragOffset / 2 - 15),
-              child: _loadMoreIndicatorStatus == LoadMoreIndicatorStatus.loading
-                  ? const CupertinoActivityIndicator(radius: 15)
-                  : CupertinoActivityIndicator.partiallyRevealed(
-                      progress: progress,
-                      radius: 15,
-                    ),
-              // child: const PullActivityIndicator(),
-            );
+      return ValueListenableBuilder<LoadMoreIndicatorStatus>(
+          valueListenable: refreshAndLoadMoreState!
+              .widget.refreshLoadingController!.footerMode!,
+          builder: (BuildContext context, loadMoreIndicatorStatus, Widget? child) {
+            switch (loadMoreIndicatorStatus) {
+              case LoadMoreIndicatorStatus.withoutNextPage:
+                return Container(
+                  height: _maxLoadingDragOffset,
+                  alignment: Alignment.center,
+                  child: const Text("這已經是列表最底了"),
+                );
+
+              case LoadMoreIndicatorStatus.loading:
+              case LoadMoreIndicatorStatus.drag:
+              case LoadMoreIndicatorStatus.snap:
+              case LoadMoreIndicatorStatus.arrived:
+                print(loadMoreIndicatorStatus);
+                return AnimatedBuilder(
+                    animation: _animationController,
+                    builder: (BuildContext context, Widget? child) {
+                      print(loadMoreIndicatorStatus);
+                      double offset =
+                          _animationController.value * _maxLoadingDragOffset;
+                      double progress = offset / _maxLoadingDragOffset;
+                      progress = progress > 1 ? 1 : progress;
+                      return Container(
+                        height: offset,
+                        alignment: Alignment.topCenter,
+                        padding: EdgeInsets.only(
+                            top: _maxLoadingDragOffset / 2 - 15),
+                        child: loadMoreIndicatorStatus ==
+                                LoadMoreIndicatorStatus.loading
+                            ? const CupertinoActivityIndicator(radius: 15)
+                            : CupertinoActivityIndicator.partiallyRevealed(
+                                progress: progress,
+                                radius: 15,
+                              ),
+                      );
+                    });
+              default:
+                return const SizedBox();
+            }
           });
-      //   default:
-      //     return const SizedBox();
-      // }
     } else {
       return const SizedBox();
     }
