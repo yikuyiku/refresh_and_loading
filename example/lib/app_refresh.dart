@@ -39,6 +39,7 @@ class AppRefresh<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshAndLoadMore(
+        // reverse: true,
         refreshLoadingController: controller,
         onRefresh: onRefresh,
         onLoadingMore: onLoadingMore,

@@ -17,8 +17,6 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
   late final AnimationController _animationController;
   bool _isDependencies = false;
 
-  // LoadMoreIndicatorStatus _loadMoreIndicatorStatus =
-  //     LoadMoreIndicatorStatus.snap;
   late RefreshLoadingController refreshLoadingController;
 
   @override
@@ -36,7 +34,11 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
       if (refreshAndLoadMoreState!.widget.refreshLoadingController != null) {
         refreshLoadingController =
             refreshAndLoadMoreState!.widget.refreshLoadingController!;
-
+        _animationController = AnimationController(
+            vsync: this,
+            lowerBound: _maxLoadingDragOffset,
+            upperBound: _maxLoadingDragOffset*2,
+            duration: const Duration(milliseconds: 1000));
         refreshAndLoadMoreState!
             .widget.refreshLoadingController?.loadMoreDragOffset
             .addListener(() {
@@ -45,15 +47,6 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
         });
       }
     }
-  }
-
-  @override
-  initState() {
-    _animationController = AnimationController(
-        vsync: this,
-        // lowerBound: 0.0,
-        // upperBound: 50.0,
-        duration: const Duration(milliseconds: 1000));
   }
 
   @override
@@ -74,7 +67,7 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
                     animation: _animationController,
                     builder: (BuildContext context, Widget? child) {
                       double offset =
-                          _animationController.value * _maxLoadingDragOffset;
+                          _animationController.value ;
                       double progress = offset / _maxLoadingDragOffset;
                       progress = progress > 1 ? 1 : progress;
                       return Container(

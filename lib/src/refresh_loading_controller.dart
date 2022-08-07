@@ -7,12 +7,14 @@ class RefreshLoadingController {
     footerMode =
         ValueNotifier<LoadMoreIndicatorStatus>(LoadMoreIndicatorStatus.snap);
     loadMoreDragOffset = ValueNotifier<double>(0);
+    refreshDragOffset = ValueNotifier<double>(0);
   }
 
   ValueNotifier<RefreshIndicatorStatus>? headerMode;
 
   ValueNotifier<LoadMoreIndicatorStatus>? footerMode;
   late ValueNotifier<double> loadMoreDragOffset;
+  late ValueNotifier<double> refreshDragOffset;
 
   refreshCompleted() {
     headerMode?.value = RefreshIndicatorStatus.done;

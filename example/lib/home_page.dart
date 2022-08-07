@@ -31,6 +31,7 @@ class _HomePageState extends State<HomePage> {
     // _refreshLoadingController.emptyData();
     items.add((items.length).toString());
     items.add((items.length).toString());
+
     items.add((items.length).toString());
     items.add((items.length).toString());
     items.add((items.length).toString());
@@ -42,6 +43,7 @@ class _HomePageState extends State<HomePage> {
 
     await Future.delayed(Duration(milliseconds: 1000));
     _refreshLoadingController.refreshCompleted();
+    // _refreshLoadingController.withoutNextPage();
     setState(() {});
     // if (mounted) setState(() {});
   }
@@ -49,7 +51,6 @@ class _HomePageState extends State<HomePage> {
   void _onLoading() async {
     // monitor network fetch
     await Future.delayed(Duration(milliseconds: 1000));
-
 
     items.add((items.length).toString());
     items.add((items.length).toString());
@@ -62,8 +63,7 @@ class _HomePageState extends State<HomePage> {
     items.add((items.length).toString());
     items.add((items.length).toString());
     _refreshLoadingController.loadingCompleted();
-    print("withoutNextPage");
-    // _refreshLoadingController.withoutNextPage();
+    _refreshLoadingController.withoutNextPage();
     setState(() {});
     // if (mounted) setState(() {});
   }
@@ -79,6 +79,7 @@ class _HomePageState extends State<HomePage> {
           onLoadingMore: _onLoading,
           controller: _refreshLoadingController,
           child: ListView.builder(
+              // reverse: true,
               primary: false,
               physics: const BouncingScrollPhysics(),
               itemCount: items.length,
