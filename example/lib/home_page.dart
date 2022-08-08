@@ -80,8 +80,8 @@ class _HomePageState extends State<HomePage> {
           controller: _refreshLoadingController,
           child: ListView.builder(
               // reverse: true,
-              primary: false,
-              physics: const BouncingScrollPhysics(),
+              // primary: false,
+              // physics: const BouncingScrollPhysics(),
               itemCount: items.length,
               itemExtent: 200.0,
               itemBuilder: (context, index) {

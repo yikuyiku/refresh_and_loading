@@ -97,7 +97,12 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   double get _refreshDragOffset => _refreshDragOffsetValue;
 
   set _refreshDragOffset(double value) {
-    value = math.max(0.0, math.min(value, widget.maxRefreshDragOffset * 2));
+    double minHeight = widget.refreshLoadingController?.headerMode?.value ==
+            RefreshIndicatorStatus.arrived
+        ? widget.maxRefreshDragOffset
+        : 0.0;
+    value =
+        math.max(minHeight, math.min(value, widget.maxRefreshDragOffset * 2));
     _refreshDragOffsetValue = value;
     _notificationRefreshIndicator();
   }
@@ -107,7 +112,8 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   double get _loadMoreDragOffset => _loadMoreDragOffsetValue;
 
   set _loadMoreDragOffset(double value) {
-    value = math.max( widget.maxLoadingDragOffset, math.min(value, widget.maxLoadingDragOffset * 2));
+    value = math.max(widget.maxLoadingDragOffset,
+        math.min(value, widget.maxLoadingDragOffset * 2));
     _loadMoreDragOffsetValue = value;
     _notificationLoadMoreIndicator();
   }
@@ -299,7 +305,7 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
       double step = overscroll /
           ((_loadMoreDragOffset > widget.maxLoadingDragOffset) ? 3 : 0.5);
       _loadMoreDragOffset = _loadMoreDragOffset + step;
-      if (_loadMoreDragOffset > widget.maxLoadingDragOffset  &&
+      if (_loadMoreDragOffset > widget.maxLoadingDragOffset &&
           widget.refreshLoadingController?.footerMode?.value !=
               LoadMoreIndicatorStatus.loading) {
         widget.refreshLoadingController?.footerMode?.value =
@@ -311,7 +317,7 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   _checkRefresh(double? overscroll) {
     if (overscroll != null) {
       double step = overscroll /
-          ((_refreshDragOffset > widget.maxRefreshDragOffset) ? 3 : 2);
+          ((_refreshDragOffset > widget.maxRefreshDragOffset) ? 2 : 0.5);
       _refreshDragOffset = _refreshDragOffset - step;
       if (_refreshDragOffset > widget.maxRefreshDragOffset &&
           widget.refreshLoadingController?.headerMode?.value !=
@@ -328,23 +334,6 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
         break;
       case ScrollUpdateNotification:
         notification as ScrollUpdateNotification;
-
-        // if (notification.metrics.extentBefore == 0.0 &&
-        //     notification.metrics.pixels == 0) {
-        //   if (widget.reverse && widget.onLoadingMore != null) {
-        //     _checkRefresh(notification.scrollDelta ?? 0);
-        //   } else if (!widget.reverse && widget.onRefresh != null) {
-        //     _checkLoadMore(notification.scrollDelta ?? 0);
-        //   }
-        // }
-        // if (notification.metrics.extentAfter == 0.0) {
-        //   if (widget.reverse && widget.onRefresh != null) {
-        //     _checkLoadMore(notification.scrollDelta ?? 0);
-        //   } else if (!widget.reverse && widget.onLoadingMore != null) {
-        //     _checkRefresh(notification.scrollDelta ?? 0);
-        //   }
-        // }
-
         if (widget.reverse) {
           if (notification.metrics.extentAfter == 0.0) {
             _checkLoadMore(notification.scrollDelta);
@@ -392,7 +381,8 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
         }
         break;
       case ScrollEndNotification:
-        if (_refreshDragOffset > widget.maxRefreshDragOffset &&
+        if (
+            // _refreshDragOffset > widget.maxRefreshDragOffset &&
             widget.refreshLoadingController?.headerMode?.value ==
                 RefreshIndicatorStatus.arrived) {
           _refreshDragOffset = widget.maxRefreshDragOffset;
