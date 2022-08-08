@@ -58,7 +58,7 @@ class _ARefreshIndicatorrState extends State<ARefreshIndicator>
                       math.min(offset / _maxRefreshDragOffset, 1.0);
                   return Container(
                     height: offset,
-                    alignment: Alignment.bottomCenter,
+                    alignment: Alignment.center,
                     padding: const EdgeInsets.only(bottom: 10),
                     child: refreshIndicatorStatus ==
                                 RefreshIndicatorStatus.refresh ||
