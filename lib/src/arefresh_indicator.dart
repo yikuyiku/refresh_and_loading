@@ -54,18 +54,21 @@ class _ARefreshIndicatorrState extends State<ARefreshIndicator>
                 builder: (BuildContext context, Widget? child) {
                   double offset = _animationController.value;
                   // double progress = math.min(offset / _maxRefreshDragOffset, 1);
-                  double progress = math.min (offset / _maxRefreshDragOffset,1.0);
+                  double progress =
+                      math.min(offset / _maxRefreshDragOffset, 1.0);
                   return Container(
                     height: offset,
                     alignment: Alignment.bottomCenter,
                     padding: const EdgeInsets.only(bottom: 10),
-                    child:
-                        refreshIndicatorStatus == RefreshIndicatorStatus.refresh
-                            ? const CupertinoActivityIndicator(radius: 15)
-                            : CupertinoActivityIndicator.partiallyRevealed(
-                                progress: progress,
-                                radius: 15,
-                              ),
+                    child: refreshIndicatorStatus ==
+                                RefreshIndicatorStatus.refresh ||
+                            refreshIndicatorStatus ==
+                                RefreshIndicatorStatus.arrived
+                        ? const CupertinoActivityIndicator(radius: 15)
+                        : CupertinoActivityIndicator.partiallyRevealed(
+                            progress: progress,
+                            radius: 15,
+                          ),
                     // child: const PullActivityIndicator(),
                   );
                 });
