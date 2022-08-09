@@ -76,7 +76,8 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
                         padding: EdgeInsets.only(
                             top: _maxLoadingDragOffset / 2 - 15),
                         child: loadMoreIndicatorStatus ==
-                                LoadMoreIndicatorStatus.loading
+                                LoadMoreIndicatorStatus.loading ||loadMoreIndicatorStatus ==
+                            LoadMoreIndicatorStatus.snap
                             ? const CupertinoActivityIndicator(radius: 15)
                             : CupertinoActivityIndicator.partiallyRevealed(
                                 progress: progress,

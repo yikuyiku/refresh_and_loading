@@ -45,7 +45,7 @@ class AppRefresh<T> extends StatelessWidget {
         onLoadingMore: onLoadingMore,
         maxRefreshDragOffset: 100,
         maxLoadingDragOffset: 60,
-        primary: primary,
+        // primary: primary,
         cacheExtent: cacheExtent,
         scrollDirection: scrollDirection,
         semanticChildCount: semanticChildCount,

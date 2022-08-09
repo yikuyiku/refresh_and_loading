@@ -18,10 +18,10 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _refreshLoadingController = RefreshLoadingController();
-    _onRefresh();
+    // _onRefresh();
   }
 
-  List<String> items = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+  List<String> items = [];
 
   _onRefresh() async {
     // monitor network fetch
@@ -63,7 +63,7 @@ class _HomePageState extends State<HomePage> {
     items.add((items.length).toString());
     items.add((items.length).toString());
     _refreshLoadingController.loadingCompleted();
-    _refreshLoadingController.withoutNextPage();
+    // _refreshLoadingController.withoutNextPage();
     setState(() {});
     // if (mounted) setState(() {});
   }
@@ -82,6 +82,7 @@ class _HomePageState extends State<HomePage> {
               // reverse: true,
               // primary: false,
               // physics: const BouncingScrollPhysics(),
+              shrinkWrap: true,
               itemCount: items.length,
               itemExtent: 200.0,
               itemBuilder: (context, index) {
