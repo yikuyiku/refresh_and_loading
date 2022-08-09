@@ -21,6 +21,10 @@ class RefreshLoadingController {
     headerMode?.value = RefreshIndicatorStatus.snap;
   }
 
+  requestRefresh() {
+    footerMode?.value = LoadMoreIndicatorStatus.snap;
+  }
+
   loadingCompleted() {
     footerMode?.value = LoadMoreIndicatorStatus.done;
   }

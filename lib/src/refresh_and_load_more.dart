@@ -418,7 +418,8 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   }
 
   Future _doRefresh() async {
-    widget.refreshLoadingController?.footerMode?.value = LoadMoreIndicatorStatus.snap;
+    widget.refreshLoadingController?.footerMode?.value =
+        LoadMoreIndicatorStatus.snap;
     widget.refreshLoadingController?.headerMode?.value =
         RefreshIndicatorStatus.refresh;
     _notificationRefreshIndicator();
