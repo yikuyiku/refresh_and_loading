@@ -36,7 +36,7 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
             refreshAndLoadMoreState!.widget.refreshLoadingController!;
         _animationController = AnimationController(
             vsync: this,
-            lowerBound: _maxLoadingDragOffset,
+            lowerBound: 0,
             upperBound: _maxLoadingDragOffset*2,
             duration: const Duration(milliseconds: 1000));
         refreshAndLoadMoreState!

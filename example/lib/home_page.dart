@@ -18,6 +18,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _refreshLoadingController = RefreshLoadingController();
+    _refreshLoadingController.requestRefresh();
     // _onRefresh();
   }
 

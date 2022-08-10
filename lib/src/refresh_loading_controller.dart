@@ -23,7 +23,7 @@ class RefreshLoadingController {
 
   requestRefresh() {
     footerMode?.value = LoadMoreIndicatorStatus.snap;
-
+    headerMode?.value = RefreshIndicatorStatus.refresh;
   }
 
   loadingCompleted() {

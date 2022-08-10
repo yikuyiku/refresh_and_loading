@@ -303,7 +303,7 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
         widget.refreshLoadingController?.footerMode?.value !=
             LoadMoreIndicatorStatus.loading) {
       double step = overscroll /
-          ((_loadMoreDragOffset > widget.maxLoadingDragOffset) ? 3 : 0.5);
+          ((_loadMoreDragOffset > widget.maxLoadingDragOffset) ? 3 : 0.3);
       _loadMoreDragOffset = _loadMoreDragOffset + step;
       if (_loadMoreDragOffset > widget.maxLoadingDragOffset &&
           widget.refreshLoadingController?.footerMode?.value !=
@@ -365,7 +365,8 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
         //       "-----------------------------------------------------------------");
         // }
         if (widget.reverse) {
-          if (notification.metrics.extentAfter == 0.0) {
+          if (notification.metrics.extentAfter == 0.0 &&
+              notification.metrics.extentBefore != 0.0) {
             _checkLoadMore(notification.overscroll);
           }
           if (notification.metrics.extentBefore == 0.0) {
@@ -375,7 +376,8 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
           if (notification.metrics.extentBefore == 0.0) {
             _checkRefresh(notification.overscroll);
           }
-          if (notification.metrics.extentAfter == 0.0) {
+          if (notification.metrics.extentAfter == 0.0 &&
+              notification.metrics.extentBefore != 0.0) {
             _checkLoadMore(notification.overscroll);
           }
         }
