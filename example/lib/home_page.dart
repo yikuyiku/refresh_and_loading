@@ -19,7 +19,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _refreshLoadingController = RefreshLoadingController();
     _refreshLoadingController.requestRefresh();
-    // _onRefresh();
+    _onRefresh();
   }
 
   List<String> items = [];
@@ -72,24 +72,33 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AppRefresh(
-          onRefresh: () async {
-            _onRefresh();
-          },
-          cacheExtent: 100,
-          onLoadingMore: _onLoading,
-          controller: _refreshLoadingController,
-          child: ListView.builder(
-              // reverse: true,
-              // primary: false,
-              // physics: const BouncingScrollPhysics(),
-              shrinkWrap: true,
-              itemCount: items.length,
-              itemExtent: 200.0,
-              itemBuilder: (context, index) {
-                // print(index.toString());
-                return Card(child: Center(child: Text(items[index])));
-              })),
+      body: GestureDetector(
+        onVerticalDragStart: (notification) {
+          print("outer ${notification.runtimeType}");
+
+        },
+        onHorizontalDragStart: (detail){
+
+        },
+        child: AppRefresh(
+            onRefresh: () async {
+              _onRefresh();
+            },
+            cacheExtent: 100,
+            onLoadingMore: _onLoading,
+            controller: _refreshLoadingController,
+            child: ListView.builder(
+                // reverse: true,
+                // primary: false,
+                // physics: const BouncingScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: items.length,
+                itemExtent: 200.0,
+                itemBuilder: (context, index) {
+                  // print(index.toString());
+                  return Card(child: Center(child: Text(items[index])));
+                })),
+      ),
     );
   }
 }

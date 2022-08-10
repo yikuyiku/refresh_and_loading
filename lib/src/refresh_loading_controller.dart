@@ -37,40 +37,54 @@ class RefreshLoadingController {
   emptyData() {
     headerMode?.value = RefreshIndicatorStatus.empty;
   }
-  // /// 是否加载完毕
-  // ValueNotifier<bool> loadEnd = ValueNotifier<bool>(false);
-  //
-  // /// 是否正在加载
-  // ValueNotifier<bool> isLoading = ValueNotifier<bool>(false);
 
   /// 加载结束
-  void loadFinish({dynamic data, bool noMore = false}) {
-    if (data != null) {
-      if (data is List) {
-        if (data.isEmpty) {
-          /// 数据为空, 加载空视图
-          emptyData();
-        } else if (noMore) {
-          /// 加载完成
-          /// 没有更多了
-          withoutNextPage();
+  void loadFinish({bool empty =false, bool noMore = false}) {
 
-          /// 隐藏loading
-          refreshCompleted();
-        } else {
-          /// 说明还有数据, 可以继续加载
-          loadingCompleted();
+    if (empty) {
+      /// 数据为空, 加载空视图
+      emptyData();
+    } else if (noMore) {
+      /// 加载完成
+      /// 没有更多了
+      withoutNextPage();
 
-          /// 隐藏loading
-          refreshCompleted();
-        }
-      } else {
-        /// 加载结束
-        refreshCompleted();
-      }
+      /// 隐藏loading
+      refreshCompleted();
     } else {
-      /// 加载结束, 没有更多
+      /// 说明还有数据, 可以继续加载
+      loadingCompleted();
+
+      /// 隐藏loading
       refreshCompleted();
     }
+
+    // if (data != null) {
+    //   if (data is List) {
+    //     if (empty) {
+    //       /// 数据为空, 加载空视图
+    //       emptyData();
+    //     } else if (noMore) {
+    //       /// 加载完成
+    //       /// 没有更多了
+    //       withoutNextPage();
+    //
+    //       /// 隐藏loading
+    //       refreshCompleted();
+    //     } else {
+    //       /// 说明还有数据, 可以继续加载
+    //       loadingCompleted();
+    //
+    //       /// 隐藏loading
+    //       refreshCompleted();
+    //     }
+    //   } else {
+    //     /// 加载结束
+    //     refreshCompleted();
+    //   }
+    // } else {
+    //   /// 加载结束, 没有更多
+    //   refreshCompleted();
+    // }
   }
 }

@@ -329,91 +329,89 @@ class RefreshAndLoadMoreState extends State<RefreshAndLoadMore> {
   }
 
   bool _notifiListener(ScrollNotification notification) {
-    switch (notification.runtimeType) {
-      case ScrollStartNotification:
-        break;
-      case ScrollUpdateNotification:
-        notification as ScrollUpdateNotification;
-        if (widget.reverse) {
-          if (notification.metrics.extentAfter == 0.0) {
-            _checkLoadMore(notification.scrollDelta);
-          }
-          if (notification.metrics.extentBefore == 0.0) {
-            _checkRefresh(notification.scrollDelta);
-          }
-        } else {
-          if (notification.metrics.extentBefore == 0.0) {
-            _checkRefresh(notification.scrollDelta);
-          }
-          if (notification.metrics.extentAfter == 0.0) {
-            _checkLoadMore(notification.scrollDelta);
-          }
+
+    if (notification is ScrollStartNotification) {
+      return false;
+    } else if (notification is ScrollUpdateNotification) {
+      if (widget.reverse) {
+        if (notification.metrics.extentAfter == 0.0) {
+          _checkLoadMore(notification.scrollDelta);
         }
-        break;
-      case OverscrollNotification:
-        notification as OverscrollNotification;
-        // if (kDebugMode) {
-        //   print(
-        //       "-----------------------------------------------------------------");
-        //
-        //   print("extentAfter: ${notification.metrics.extentAfter}");
-        //   print("extentBefore: ${notification.metrics.extentBefore}");
-        //   print("overscroll: ${notification.overscroll}");
-        //   print("pixels: ${notification.metrics.pixels}");
-        //   print("pixels: ${notification.metrics.axisDirection}");
-        //   print(
-        //       "-----------------------------------------------------------------");
-        // }
-        if (widget.reverse) {
-          if (notification.metrics.extentAfter == 0.0 &&
-              notification.metrics.extentBefore != 0.0) {
-            _checkLoadMore(notification.overscroll);
-          }
-          if (notification.metrics.extentBefore == 0.0) {
-            _checkRefresh(notification.overscroll);
-          }
-        } else {
-          if (notification.metrics.extentBefore == 0.0) {
-            _checkRefresh(notification.overscroll);
-          }
-          if (notification.metrics.extentAfter == 0.0 &&
-              notification.metrics.extentBefore != 0.0) {
-            _checkLoadMore(notification.overscroll);
-          }
+        if (notification.metrics.extentBefore == 0.0) {
+          _checkRefresh(notification.scrollDelta);
         }
-        break;
-      case ScrollEndNotification:
-        if (
-            // _refreshDragOffset > widget.maxRefreshDragOffset &&
-            widget.refreshLoadingController?.headerMode?.value ==
-                RefreshIndicatorStatus.arrived) {
-          _refreshDragOffset = widget.maxRefreshDragOffset;
-          _notificationRefreshIndicator();
-          _doRefresh();
-        } else if (widget.refreshLoadingController?.headerMode?.value !=
-            RefreshIndicatorStatus.refresh) {
-          _putAwayRefresh();
-        } else if (widget.refreshLoadingController?.headerMode?.value ==
-            RefreshIndicatorStatus.refresh) {
-          _refreshDragOffset = widget.maxRefreshDragOffset;
+      } else {
+        if (notification.metrics.extentBefore == 0.0) {
+          _checkRefresh(notification.scrollDelta);
         }
-        if (_loadMoreDragOffset > widget.maxLoadingDragOffset &&
-            widget.refreshLoadingController?.footerMode?.value ==
-                LoadMoreIndicatorStatus.arrived &&
-            widget.refreshLoadingController?.footerMode?.value !=
-                LoadMoreIndicatorStatus.loading) {
-          widget.refreshLoadingController?.footerMode?.value =
-              LoadMoreIndicatorStatus.loading;
-          _loadMoreDragOffset = widget.maxLoadingDragOffset;
-          // _notificationRefreshIndicator();
-          _doLoadMore();
-        } else if (widget.refreshLoadingController?.footerMode?.value !=
-                LoadMoreIndicatorStatus.withoutNextPage &&
-            widget.refreshLoadingController?.footerMode?.value !=
-                LoadMoreIndicatorStatus.loading) {
-          _putAwayLoadMore();
+        if (notification.metrics.extentAfter == 0.0) {
+          _checkLoadMore(notification.scrollDelta);
         }
-        break;
+      }
+    }
+
+    if (notification is OverscrollNotification) {
+      // if (kDebugMode) {
+      //   print(
+      //       "-----------------------------------------------------------------");
+      //
+      //   print("extentAfter: ${notification.metrics.extentAfter}");
+      //   print("extentBefore: ${notification.metrics.extentBefore}");
+      //   print("overscroll: ${notification.overscroll}");
+      //   print("pixels: ${notification.metrics.pixels}");
+      //   print("pixels: ${notification.metrics.axisDirection}");
+      //   print(
+      //       "-----------------------------------------------------------------");
+      // }
+      if (widget.reverse) {
+        if (notification.metrics.extentAfter == 0.0 &&
+            notification.metrics.extentBefore != 0.0) {
+          _checkLoadMore(notification.overscroll);
+        }
+        if (notification.metrics.extentBefore == 0.0) {
+          _checkRefresh(notification.overscroll);
+        }
+      } else {
+        if (notification.metrics.extentBefore == 0.0) {
+          _checkRefresh(notification.overscroll);
+        }
+        if (notification.metrics.extentAfter == 0.0 &&
+            notification.metrics.extentBefore != 0.0) {
+          _checkLoadMore(notification.overscroll);
+        }
+      }
+    }
+    if (notification is ScrollEndNotification) {
+      if (
+          // _refreshDragOffset > widget.maxRefreshDragOffset &&
+          widget.refreshLoadingController?.headerMode?.value ==
+              RefreshIndicatorStatus.arrived) {
+        _refreshDragOffset = widget.maxRefreshDragOffset;
+        _notificationRefreshIndicator();
+        _doRefresh();
+      } else if (widget.refreshLoadingController?.headerMode?.value !=
+          RefreshIndicatorStatus.refresh) {
+        _putAwayRefresh();
+      } else if (widget.refreshLoadingController?.headerMode?.value ==
+          RefreshIndicatorStatus.refresh) {
+        _refreshDragOffset = widget.maxRefreshDragOffset;
+      }
+      if (_loadMoreDragOffset > widget.maxLoadingDragOffset &&
+          widget.refreshLoadingController?.footerMode?.value ==
+              LoadMoreIndicatorStatus.arrived &&
+          widget.refreshLoadingController?.footerMode?.value !=
+              LoadMoreIndicatorStatus.loading) {
+        widget.refreshLoadingController?.footerMode?.value =
+            LoadMoreIndicatorStatus.loading;
+        _loadMoreDragOffset = widget.maxLoadingDragOffset;
+        // _notificationRefreshIndicator();
+        _doLoadMore();
+      } else if (widget.refreshLoadingController?.footerMode?.value !=
+              LoadMoreIndicatorStatus.withoutNextPage &&
+          widget.refreshLoadingController?.footerMode?.value !=
+              LoadMoreIndicatorStatus.loading) {
+        _putAwayLoadMore();
+      }
     }
 
     return false;
