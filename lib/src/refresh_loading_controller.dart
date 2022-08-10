@@ -54,9 +54,15 @@ class RefreshLoadingController {
           /// 加载完成
           /// 没有更多了
           withoutNextPage();
+
+          /// 隐藏loading
+          refreshCompleted();
         } else {
           /// 说明还有数据, 可以继续加载
           loadingCompleted();
+
+          /// 隐藏loading
+          refreshCompleted();
         }
       } else {
         /// 加载结束
@@ -66,8 +72,5 @@ class RefreshLoadingController {
       /// 加载结束, 没有更多
       refreshCompleted();
     }
-
-    /// 隐藏loading
-    refreshCompleted();
   }
 }
