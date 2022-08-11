@@ -58,6 +58,9 @@ class RefreshLoadingController {
       refreshCompleted();
     }
   }
+  @Deprecated(
+    'Use loadFinished instead.'
+  )
   void loadFinish({dynamic data , bool noMore = false}) {
     if (data != null) {
       if (data is List) {
