@@ -39,8 +39,7 @@ class RefreshLoadingController {
   }
 
   /// 加载结束
-  void loadFinish({bool empty =false, bool noMore = false}) {
-
+  void loadFinished({bool empty =false, bool noMore = false}) {
     if (empty) {
       /// 数据为空, 加载空视图
       emptyData();
@@ -58,33 +57,34 @@ class RefreshLoadingController {
       /// 隐藏loading
       refreshCompleted();
     }
+  }
+  void loadFinish({dynamic data , bool noMore = false}) {
+    if (data != null) {
+      if (data is List) {
+        if (data.isEmpty) {
+          /// 数据为空, 加载空视图
+          emptyData();
+        } else if (noMore) {
+          /// 加载完成
+          /// 没有更多了
+          withoutNextPage();
 
-    // if (data != null) {
-    //   if (data is List) {
-    //     if (empty) {
-    //       /// 数据为空, 加载空视图
-    //       emptyData();
-    //     } else if (noMore) {
-    //       /// 加载完成
-    //       /// 没有更多了
-    //       withoutNextPage();
-    //
-    //       /// 隐藏loading
-    //       refreshCompleted();
-    //     } else {
-    //       /// 说明还有数据, 可以继续加载
-    //       loadingCompleted();
-    //
-    //       /// 隐藏loading
-    //       refreshCompleted();
-    //     }
-    //   } else {
-    //     /// 加载结束
-    //     refreshCompleted();
-    //   }
-    // } else {
-    //   /// 加载结束, 没有更多
-    //   refreshCompleted();
-    // }
+          /// 隐藏loading
+          refreshCompleted();
+        } else {
+          /// 说明还有数据, 可以继续加载
+          loadingCompleted();
+
+          /// 隐藏loading
+          refreshCompleted();
+        }
+      } else {
+        /// 加载结束
+        refreshCompleted();
+      }
+    } else {
+      /// 加载结束, 没有更多
+      refreshCompleted();
+    }
   }
 }
